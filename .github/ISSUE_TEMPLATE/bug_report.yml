@@ -1,0 +1,91 @@
+name: Bug report
+description: Something doesn't work as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please don't report security
+        issues here - see the [security policy](../blob/main/.github/SECURITY.md)
+        for private reporting.
+
+        Two things that are expected behavior rather than bugs:
+
+        - **Estimates only appear after a few quests.** The plugin measures your
+          own pace and says "measuring" until it has enough samples.
+        - **The first quest you finish after logging in is not measured.** There
+          is no baseline for it, and inventing one would skew the average.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: |
+        I turned in an MSQ quest and the counter didn't move ...
+        I expected ... but ...
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The exact steps, starting from a fresh login if you can.
+      placeholder: |
+        1. Log in on a character mid-MSQ
+        2. Open /msq
+        3. Turn in the current quest
+        4. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Where does it happen?
+      options:
+        - The plugin window (/msq)
+        - The Umbra toolbar widget
+        - Both
+        - Somewhere else (chat output, log, crash)
+    validations:
+      required: true
+  - type: input
+    id: dalamud
+    attributes:
+      label: Dalamud version / API level
+      description: Dalamud Settings -> Experimental shows both.
+      placeholder: "API 15"
+    validations:
+      required: true
+  - type: input
+    id: game-version
+    attributes:
+      label: Game patch
+      placeholder: "7.4"
+  - type: textarea
+    id: context
+    attributes:
+      label: Where in the MSQ is the character?
+      description: Expansion and roughly where, plus anything unusual - a New Game+ character, a skipped MSQ, a second account.
+      placeholder: "Dawntrail, around 'The Fallen Prince'. Bought the story skip for A Realm Reborn."
+  - type: textarea
+    id: log
+    attributes:
+      label: Log output
+      description: Run /xllog, filter for the plugin, and paste anything relevant - especially exceptions.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this isn't a duplicate.
+          required: true
+        - label: This is not a security vulnerability (those go through the security policy).
+          required: true

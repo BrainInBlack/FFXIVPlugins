@@ -1,0 +1,21 @@
+<Project>
+
+  <!--
+    Machine-local paths. Copy this file to Directory.Build.local.props (which is
+    git-ignored and imported automatically by Directory.Build.props) and adjust.
+
+    Only needed when Dalamud or Umbra are NOT where the projects look by default:
+      Dalamud  %AppData%\XIVLauncher\addon\Hooks\dev\
+      Umbra    %AppData%\XIVLauncher\installedPlugins\Umbra\<version>\
+
+    The DALAMUD_HOME / UMBRA_HOME environment variables do the same thing; use
+    whichever you prefer. Mind the trailing backslash - these are concatenated
+    with the assembly file name.
+  -->
+
+  <PropertyGroup>
+    <!-- <DalamudLibPath>C:\path\to\dalamud\dev\</DalamudLibPath> -->
+    <!-- <UmbraLibPath>C:\path\to\umbra\</UmbraLibPath> -->
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,21 @@
+[
+  {
+    "Author": "BrainInBlack",
+    "Name": "Scenariometer",
+    "InternalName": "Scenariometer",
+    "AssemblyVersion": "1.0.0.0",
+    "Description": "Tracks your Main Scenario progress per character and estimates the time to the end of the current expansion and to the end of the MSQ, based on how fast you have been clearing quests.",
+    "Punchline": "How much MSQ is left, and how long it will actually take you.",
+    "RepoUrl": "https://github.com/BrainInBlack/FFXIVPlugins",
+    "IconUrl": "https://raw.githubusercontent.com/BrainInBlack/FFXIVPlugins/main/src/Scenariometer/images/icon.png",
+    "Tags": [ "msq", "quest", "progress", "tracker", "main scenario" ],
+    "CategoryTags": [ "utility" ],
+    "DalamudApiLevel": 15,
+    "AcceptsFeedback": true,
+    "IsHide": false,
+    "IsTestingExclusive": false,
+    "DownloadLinkInstall": "https://github.com/BrainInBlack/FFXIVPlugins/releases/latest/download/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/BrainInBlack/FFXIVPlugins/releases/latest/download/latest.zip",
+    "DownloadLinkTesting": "https://github.com/BrainInBlack/FFXIVPlugins/releases/latest/download/latest.zip"
+  }
+]

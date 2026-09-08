@@ -1,0 +1,33 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Markdown: trailing whitespace can be meaningful (hard line breaks).
+[*.md]
+trim_trailing_whitespace = false
+indent_size = 2
+
+[*.{json,yml,yaml,slnx,csproj,props,targets}]
+indent_size = 2
+
+# Visual Studio / Rider write these with CRLF and tabs; don't fight them.
+[*.sln]
+end_of_line = crlf
+indent_style = tab
+
+[*.cs]
+# --- Style the analyzers enforce at build (see Directory.Build.props) ---
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_using_directive_placement = outside_namespace:warning
+csharp_prefer_braces = when_multiline:suggestion
+dotnet_sort_system_directives_first = true
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
+dotnet_diagnostic.IDE0055.severity = suggestion

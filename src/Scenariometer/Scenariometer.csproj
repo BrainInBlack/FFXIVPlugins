@@ -1,0 +1,46 @@
+<Project Sdk="Dalamud.NET.Sdk">
+
+  <!--
+    Dalamud.NET.Sdk (version pinned in ../../global.json) supplies the
+    TargetFramework, references every Dalamud/ImGui/Lumina/FFXIVClientStructs
+    assembly from the local Dalamud install, and runs DalamudPackager on build.
+
+    It does NOT include images: the SDK sets EnableDefaultNoneItems=false, so
+    nothing is picked up implicitly and images/** has to be listed by hand.
+    Dalamud loads a plugin's icon from images/icon.png next to the assembly, and
+    DalamudPackager zips whatever is in the output directory - so the icon has to
+    be copied to the output or it is missing from both the dev load and the
+    release zip.
+  -->
+
+  <PropertyGroup>
+    <!-- AssemblyName doubles as the plugin's InternalName; must match
+         Scenariometer.json's InternalName and the manifest file name. -->
+    <AssemblyName>Scenariometer</AssemblyName>
+    <RootNamespace>Scenariometer</RootNamespace>
+    <Version>1.0.0.0</Version>
+
+    <!-- Stated explicitly because the repo is no longer uniformly MIT - the Umbra
+         widget beside this project is AGPL. See LICENSING.md. -->
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>Tracks Main Scenario progress and estimates how long the rest of it will take.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="images\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Native game UI (AtkUnitBase nodes). MIT, and the same library VanillaPlus
+         uses. Ships next to the plugin, so it has to be in the release zip too. -->
+    <PackageReference Include="KamiToolKit" Version="2.2.36" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Linked, not referenced: the Umbra widget compiles its own copy of this file.
+         See the comment in ScenariometerContract.cs for why a shared assembly would
+         be wrong here. -->
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+</Project>

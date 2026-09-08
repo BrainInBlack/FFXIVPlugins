@@ -1,0 +1,117 @@
+# --- OS cruft ------------------------------------------------
+# macOS
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+# Linux
+*~
+.directory
+.Trash-*
+
+# --- Editors / IDEs ------------------------------------------
+.idea/
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.swp
+*.swo
+*.code-workspace
+
+# --- .NET build output ---------------------------------------
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.binlog
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+.packages/
+BenchmarkDotNet.Artifacts/
+
+# DalamudPackager output (the shipped zip + latest.zip live here).
+dist/
+
+# --- Local Dalamud dev pointers ------------------------------
+# DALAMUD_HOME differs per machine; never track a machine-local override.
+Directory.Build.local.props
+local.props
+
+# --- Logs & diagnostics --------------------------------------
+logs/
+*.log
+
+# --- Environment / secrets -----------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- AI assistant tooling ------------------------------------
+# Keep each contributor's assistant config local - no AI artifacts tracked.
+# Claude Code
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.claude-*
+# Workspace ASCII checker config
+.asciiignore
+# Cursor
+.cursor/
+.cursorrules
+.cursorignore
+.cursorindexingignore
+# Aider / Continue / Windsurf / Roo / Cline
+.aider*
+.continue/
+.windsurf/
+.windsurfrules
+.roo/
+.cline/
+.clinerules
+# Copilot / Codeium / Gemini
+.github/copilot-instructions.md
+.codeium/
+.gemini/
+GEMINI.md
+# Others
+.tabnine/
+.sourcegraph/
+.serena/
+.opencode/
+.crush/
+# Repo-context dumps
+repomix-output.*
+.repomix/
+.ai/
+
+# --- Personal data - kept out of the public repo -------------
+private/
+
+# --- Syncthing artifacts -------------------------------------
+# The Projects folder is synced between machines via Syncthing; never track
+# its housekeeping files or conflict copies.
+.stfolder/
+.stignore
+.stversions/
+.syncthing.*.tmp
+~syncthing~*.tmp
+*.sync-conflict-*

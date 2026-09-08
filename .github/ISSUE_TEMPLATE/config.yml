@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/BrainInBlack/FFXIVPlugins/security/advisories/new
+    about: Please report security issues privately, not as public issues. See the security policy.
+  - name: Question or usage help
+    url: https://github.com/BrainInBlack/FFXIVPlugins/discussions
+    about: For questions and general discussion, use Discussions instead of an issue.

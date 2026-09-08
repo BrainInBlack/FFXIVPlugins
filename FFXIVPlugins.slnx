@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/solution items/">
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="repo.json" />
+  </Folder>
+  <Project Path="src/Scenariometer/Scenariometer.csproj" />
+  <Project Path="src/Scenariometer.Umbra/Scenariometer.Umbra.csproj" />
+</Solution>

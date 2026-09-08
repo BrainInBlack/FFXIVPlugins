@@ -1,0 +1,47 @@
+name: Feature request
+description: Suggest an improvement or new capability.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        These plugins stay passive and local: they read game state and draw
+        windows, they never act for you, and nothing leaves your machine. The
+        estimate is built from your own measured pace rather than from a table of
+        averages, and progress is read from the game so there is nothing to check
+        off by hand. Proposals that fit that shape are easiest to land.
+
+        Things that will not be added: anything that moves your character,
+        accepts or turns in quests, or otherwise plays the game for you; any
+        telemetry or account system; and any feature that needs a server.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the use case or the pain point, not just the solution.
+      placeholder: I'm levelling an alt through the MSQ and I can't tell whether ...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What new behavior would you like? Sketch the display or interaction if relevant.
+      placeholder: |
+        Show the estimate for the current expansion separately, so ...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds you currently use, or other approaches you weighed.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This keeps the plugin passive - it reads and displays, it doesn't play the game.
+        - label: This needs no network access, no account, and no telemetry.
+        - label: I searched existing issues and this isn't already requested.
+          required: true

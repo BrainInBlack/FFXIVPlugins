@@ -1,0 +1,20 @@
+{
+  "//": [
+    "Two independent pins live here.",
+    "  sdk            - the .NET SDK used to build. Dalamud API 15 targets .NET 10;",
+    "                   rollForward lets a newer installed SDK do the job.",
+    "  msbuild-sdks   - THE Dalamud API level for every plugin in this repo.",
+    "                   Dalamud.NET.Sdk major == Dalamud API level (15.x -> API 15).",
+    "                   Bumping this one number retargets the whole collection.",
+    "Verified 2026-08-31 against nuget.org (Dalamud.NET.Sdk 15.0.0 was latest) and",
+    "goatcorp.github.io/dalamud-distrib/version (assembly 15.0.3.2). Re-check both",
+    "after a Dalamud major bump, and update repo.json's DalamudApiLevel with it."
+  ],
+  "sdk": {
+    "version": "10.0.100",
+    "rollForward": "latestMajor"
+  },
+  "msbuild-sdks": {
+    "Dalamud.NET.Sdk": "15.0.0"
+  }
+}

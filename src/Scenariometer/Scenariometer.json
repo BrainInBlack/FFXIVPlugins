@@ -1,0 +1,12 @@
+{
+  "Author": "BrainInBlack",
+  "Name": "Scenariometer",
+  "InternalName": "Scenariometer",
+  "Punchline": "How much MSQ is left, and how long it will actually take you.",
+  "Description": "Tracks your Main Scenario progress per character and estimates the time to the end of the current expansion and to the end of the MSQ, based on how fast you have been clearing quests.\n\n- Progress bar per expansion and overall (quests done / total).\n- Estimates from your own measured pace, not a fixed average, with a low/high band.\n- Only counts time you are actually logged in and not AFK; long breaks are detected and dropped instead of poisoning the average.\n- Everything is stored locally, per character.",
+  "RepoUrl": "https://github.com/BrainInBlack/FFXIVPlugins",
+  "Tags": [ "msq", "quest", "progress", "tracker", "main scenario" ],
+  "CategoryTags": [ "utility" ],
+  "AcceptsFeedback": true,
+  "IconUrl": "https://raw.githubusercontent.com/BrainInBlack/FFXIVPlugins/main/src/Scenariometer/images/icon.png"
+}

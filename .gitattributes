@@ -1,0 +1,11 @@
+# Normalize line endings: LF in the repo, auto-converted on checkout.
+* text=auto eol=lf
+
+# Solution files are tool-written with CRLF; leave them alone.
+*.sln text eol=crlf
+
+# Binary assets - never touch these.
+*.png binary
+*.jpg binary
+*.ico binary
+*.dll binary

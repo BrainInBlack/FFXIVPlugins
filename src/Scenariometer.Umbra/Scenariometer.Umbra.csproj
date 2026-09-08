@@ -1,0 +1,84 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The Umbra widget. NOT a Dalamud plugin: Umbra loads this DLL itself, from the
+    path the user adds under Umbra's Settings -> Plugins. It therefore uses the plain
+    Microsoft.NET.Sdk and references the Umbra and Dalamud assemblies directly, the
+    way una-xiv/Umbra.SamplePlugin does.
+
+    Every reference is Private=false: Umbra's plugin loader forward-references these
+    assemblies, so copying them next to our DLL would load a second, incompatible
+    copy of Umbra's own types.
+  -->
+
+  <PropertyGroup>
+    <!-- Must match the runtime Dalamud/Umbra run on; Umbra's own sample targets this. -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Platforms>x64</Platforms>
+    <AssemblyName>Scenariometer.Umbra</AssemblyName>
+    <!-- Deliberately NOT "Scenariometer.Umbra": a namespace segment called Umbra
+         inside our own root would shadow Umbra's real namespaces at every reference
+         site inside the namespace body. -->
+    <RootNamespace>ScenariometerUmbra</RootNamespace>
+    <Version>1.0.0.0</Version>
+
+    <!-- AGPL, not the repo's MIT: this assembly references Umbra and Una.Drawing,
+         which are AGPL-3.0 with no linking exception. See LICENSING.md at the repo
+         root, and the copy of the license next to this file. -->
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+
+    <!-- Umbra lists third-party plugins by reading these attributes out of the
+         assembly without loading it: AssemblyTitle -> name, Company -> author,
+         Description -> description, FileVersion -> version. Left unset, the list
+         shows the file name and "Anonymous". -->
+    <AssemblyTitle>Scenariometer</AssemblyTitle>
+    <Company>BrainInBlack</Company>
+    <Copyright>Copyright (c) 2026 Daniel (BrainInBlack)</Copyright>
+    <Description>Main Scenario progress, pace and daily goal on the Umbra toolbar. Requires the Scenariometer Dalamud plugin, which does the measuring.</Description>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Assembly locations. Both accept an override so CI (and non-Windows checkouts)
+       can point at a downloaded copy instead of an XIVLauncher install. -->
+  <PropertyGroup>
+    <DalamudLibPath Condition="'$(DalamudLibPath)' == '' and '$(DALAMUD_HOME)' != ''">$(DALAMUD_HOME)\</DalamudLibPath>
+    <DalamudLibPath Condition="'$(DalamudLibPath)' == ''">$(AppData)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+
+    <UmbraLibPath Condition="'$(UmbraLibPath)' == '' and '$(UMBRA_HOME)' != ''">$(UMBRA_HOME)\</UmbraLibPath>
+    <!-- Installed through Dalamud: one versioned directory under installedPlugins\Umbra.
+         (Dynamic lookup lifted from Umbra's sample project.) -->
+    <UmbraLibPath Condition="'$(UmbraLibPath)' == '' and Exists('$(AppData)\XIVLauncher\installedPlugins\Umbra\')">$([System.IO.Directory]::GetDirectories($(AppData)\XIVLauncher\installedPlugins\Umbra\)[0])\</UmbraLibPath>
+  </PropertyGroup>
+
+  <Target Name="VerifyUmbraAssemblies" BeforeTargets="BeforeBuild" Condition="!Exists('$(UmbraLibPath)Umbra.dll')">
+    <Error Text="Umbra.dll not found (looked in '$(UmbraLibPath)'). Install Umbra through Dalamud, or set UMBRA_HOME / -p:UmbraLibPath= to a directory holding Umbra's assemblies (see https://github.com/una-xiv/umbra-dist). To build only the Dalamud plugin, build src/Scenariometer/Scenariometer.csproj instead of the solution." />
+  </Target>
+
+  <ItemGroup>
+    <!-- Same file the plugin compiles; see ScenariometerContract.cs for why it is
+         linked rather than referenced. -->
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Umbra">
+      <HintPath>$(UmbraLibPath)Umbra.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Umbra.Common">
+      <HintPath>$(UmbraLibPath)Umbra.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Una.Drawing">
+      <HintPath>$(UmbraLibPath)Una.Drawing.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Dalamud">
+      <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

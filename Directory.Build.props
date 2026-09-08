@@ -1,0 +1,36 @@
+<Project>
+
+  <!--
+    Shared metadata and compiler settings for every plugin in this repo.
+    Imported BEFORE Dalamud.NET.Sdk's own props, so it deliberately sets no
+    TargetFramework / OutputType / Dalamud lib paths - the SDK owns those.
+    Per-plugin values (Version, Description) belong in the plugin's .csproj.
+  -->
+
+  <PropertyGroup>
+    <Authors>BrainInBlack</Authors>
+    <Company>BrainInBlack</Company>
+    <Copyright>Copyright (c) BrainInBlack</Copyright>
+    <RepositoryUrl>https://github.com/BrainInBlack/FFXIVPlugins</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Nullability mistakes are the cheapest crash class to catch in a plugin
+         that runs inside someone else's game process - fail the build on them. -->
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <!-- FFXIVClientStructs is pointer-based; every plugin here needs this. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- Optional machine-local overrides (DALAMUD_HOME and friends). Git-ignored. -->
+  <Import Project="Directory.Build.local.props" Condition="Exists('Directory.Build.local.props')" />
+
+</Project>
