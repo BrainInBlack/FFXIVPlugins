@@ -191,5 +191,5 @@ unverified: the AFK clock pause.
 - A generated plugin icon (`scripts/make-icon.py`, stdlib only) and a
   hand-maintained `repo.json` for installing through a custom Dalamud repository.
 
-[Unreleased]: https://github.com/BrainInBlack/FFXIVPlugins/compare/v1.0.0...develop
-[1.0.0]: https://github.com/BrainInBlack/FFXIVPlugins/releases/tag/v1.0.0
+[Unreleased]: https://github.com/BrainInBlack/FFXIVPlugins/compare/1.0.0...develop
+[1.0.0]: https://github.com/BrainInBlack/FFXIVPlugins/releases/tag/1.0.0

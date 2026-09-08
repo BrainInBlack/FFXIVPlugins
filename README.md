@@ -155,15 +155,42 @@ that has never built this before.
 
 ## Releasing
 
-`repo.json` is hand-maintained. When cutting a release, bump `AssemblyVersion`
-there to match `<Version>` in the plugin's csproj, and attach both artifacts to the
-GitHub release:
+Nothing about this is automated, and three of the steps fail silently if you get
+them wrong - the notes on each say how.
 
-- `latest.zip` - the DalamudPackager output, from
-  `src/Scenariometer/bin/Release/Scenariometer/`. Upload it under that exact name;
-  the three `DownloadLink*` fields in `repo.json` point at it.
-- `Scenariometer.Umbra.dll` - the widget, as its own asset rather than inside the
-  archive, so Umbra can be pointed straight at it.
+1. **Bump the version in three places, together:** `<Version>` in both csprojs and
+   `AssemblyVersion` in `repo.json`. Dalamud compares the version in `repo.json`
+   against the one inside the zip, and will not offer an update if they disagree.
+2. **Move `## [Unreleased]` in `CHANGELOG.md`** to the new version, and add the
+   link definitions at the bottom of the file. Those use the **tag** name, so
+   whatever you tag has to match what you write there.
+3. **Clean Release build**, then load it in game and exercise what changed. There
+   is no CI; this is the only test there is.
+4. **Tag the release commit on `main`.** Annotated, so it gets signed.
+5. **Create the GitHub release with a name that has never been used before.**
+
+   This one matters more than it looks. Umbra tracks third-party widget updates by
+   comparing the stored string against the **release name** - not the tag, not the
+   assembly version. It records exactly what you typed in the release title, and
+   treats the widget as current for as long as that string matches. Reuse a title
+   and Umbra will never offer the update to anyone, with no error anywhere.
+   `Scenariometer - 1.0.0` was the first; keep the version in the title.
+
+6. **Attach both artifacts, under these exact names:**
+
+   - `latest.zip` - the DalamudPackager output, from
+     `src/Scenariometer/bin/Release/Scenariometer/`. The name is not decorative:
+     the three `DownloadLink*` fields in `repo.json` resolve
+     `releases/latest/download/latest.zip` by filename. If you re-upload, delete
+     the old asset first - GitHub renames a colliding upload to `latest-1.zip`
+     rather than replacing it, and the install link then 404s.
+   - `Scenariometer.Umbra.dll` - the widget, as its own asset rather than inside
+     the archive, so Umbra can be pointed straight at it.
+
+Umbra's repository installer downloads *every* `.dll` and `.zip` asset from the
+latest release, so it also pulls `latest.zip`, extracts it, and tries to load the
+Dalamud plugin as an Umbra widget. That fails and is skipped - two warnings in the
+log, nothing broken. It is expected, not a symptom.
 
 ## License
 
