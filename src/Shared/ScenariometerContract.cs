@@ -171,6 +171,9 @@ internal sealed class ScenariometerSnapshot
     /// How far ahead of the plan the character is, in quests; negative is behind.
     /// Sent rather than derived: it is cumulative across the days since the target
     /// was set, which the per-day fields cannot express.
+    ///
+    /// Today counts toward it, but only the quests done past today's own share - so
+    /// it moves as the day is played without opening the morning a day in the red.
     /// </summary>
     public int AheadBy { get; set; }
 

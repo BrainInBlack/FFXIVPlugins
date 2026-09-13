@@ -3,6 +3,7 @@ using System.Numerics;
 using Dalamud.Game.Command;
 using Dalamud.Plugin;
 using KamiToolKit;
+using Scenariometer.Contract;
 using Scenariometer.Estimation;
 using Scenariometer.Ipc;
 using Scenariometer.Msq;
@@ -19,6 +20,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly NativeMainWindow nativeWindow;
     private readonly NativeConfigWindow nativeConfigWindow;
     private readonly NativeDatePickerWindow datePicker;
+    private readonly NativeConfirmWindow confirmWindow;
 
     private readonly MsqIndex index;
     private readonly ActiveTimeClock clock;
@@ -92,6 +94,20 @@ public sealed class Plugin : IDalamudPlugin
             Size = new Vector2(290f, 318f),
         };
 
+        confirmWindow = new NativeConfirmWindow
+        {
+            InternalName = "ScenariometerAsk",
+            // The question itself, so the frame says what is being decided even before
+            // the lines inside it are read.
+            Title = "Change the plan start?",
+            // Sized to the question, not to the frame it could fill: at 380 the
+            // longest line covered under half the content box and the whole thing
+            // read as mostly empty window. The height is exact, like the others -
+            // NativeConfirmWindow.OnSetup warns with the right number if the
+            // statement, the question, the button row and the margin stop adding up.
+            Size = new Vector2(310f, 172f),
+        };
+
         nativeConfigWindow = new NativeConfigWindow(ClearHistory, OpenDatePicker, SetTarget)
         {
             // Distinct from the main window's, and inside the 31 character limit.
@@ -137,6 +153,7 @@ public sealed class Plugin : IDalamudPlugin
         nativeWindow.Dispose();
         nativeConfigWindow.Dispose();
         datePicker.Dispose();
+        confirmWindow.Dispose();
         KamiToolKitLibrary.Dispose();
 
         tracker.SampleRecorded -= OnSampleRecorded;
@@ -150,25 +167,103 @@ public sealed class Plugin : IDalamudPlugin
     private void ToggleConfigWindow() => nativeConfigWindow.Toggle();
 
     /// <summary>
-    /// Sets the target and restarts every character's plan. A new target is a new
-    /// plan, so surplus banked against the old one must not follow it across - and the
-    /// current character's starts today, while the rest re-establish theirs when they
-    /// are next loaded.
+    /// Sets the target, and asks what should become of the plan already running.
+    ///
+    /// A new date means one of two things and which one is not guessable from the
+    /// date. Moving the deadline out on a plan under way keeps its carry, so a deficit
+    /// shrinks instead of disappearing - that is the point of moving it. Starting over
+    /// measures from today and throws the carry away. This used to assume the second
+    /// one silently, including when the "new" date was the one already set, which made
+    /// retyping a target a way to lose its history without touching anything labelled
+    /// as doing that.
+    ///
+    /// The date itself is never held up by the question: it is applied at once, and
+    /// only the plan start waits for an answer.
     /// </summary>
     private void SetTarget(DateOnly? date)
     {
-        Config.ClearTargetStarts();
-
         if (date is null)
         {
+            // No target is no plan, so there is no start worth keeping and nothing to
+            // ask. Clearing is already deliberate - it is a button that says so.
+            Config.ClearTargetStarts();
             Config.TargetDate = string.Empty;
             return;
         }
 
-        Config.TargetDate = date.Value.ToString(DailyGoal.IsoFormat);
-        Config.SetTargetStart(
-            tracker.CurrentContentId,
-            DailyGoal.LogicalDate(DateTimeOffset.Now, Config.DayStartHour).ToString(DailyGoal.IsoFormat));
+        var iso = date.Value.ToString(DailyGoal.IsoFormat);
+
+        // The date already set is not a new plan, and re-entering it is not a request
+        // to restart one. Typing into the field re-fires this on every commit.
+        if (Config.TargetDate == iso)
+            return;
+
+        Config.TargetDate = iso;
+
+        var today = DailyGoal.LogicalDate(DateTimeOffset.Now, Config.DayStartHour);
+
+        // Nothing to lose: no plan has run on this character yet, or the one that has
+        // began today, so restarting it lands on the same day it already starts. Both
+        // would be a question with one meaningful answer.
+        if (!DailyGoal.TryParse(Config.TargetStartFor(tracker.CurrentContentId), out var start)
+            || start >= today)
+        {
+            RestartPlan(today);
+            return;
+        }
+
+        // Captured, not read back at answer time. The window can outlive the character
+        // it is asking about.
+        var character = tracker.CurrentContentId;
+
+        var banked = DailyGoal.CompletedSince(
+            tracker.History,
+            start,
+            Config.DayStartHour,
+            DateTimeOffset.Now);
+
+        confirmWindow.Ask(
+            [
+                $"This plan has run since {DailyGoal.Format(start)}.",
+                // No verb, so it survives the singular: "1 quest are measured" is the
+                // same agreement bug the report strings have already produced once.
+                $"{banked} {ScenariometerFormat.Quests(banked)} counted against it so far.",
+            ],
+            question: "Keep it, or start over from today?",
+            confirm: "Restart today",
+            cancel: "Keep the plan",
+            answer =>
+            {
+                // A logout or a character switch while the question sat open. It was
+                // asked about that character's plan, and every answer to it - keeping
+                // included - would land on whoever is loaded now. ProgressTracker has
+                // already established a start for them; leave it alone.
+                if (tracker.CurrentContentId != character)
+                    return;
+
+                // Recomputed rather than captured. The window can sit unanswered
+                // across the day-start hour, and the plan would then restart on a day
+                // that is no longer today.
+                if (answer)
+                    RestartPlan(DailyGoal.LogicalDate(DateTimeOffset.Now, Config.DayStartHour));
+
+                // The caller saved the date long ago; this is a second, later change.
+                Config.Save();
+                nativeConfigWindow.RefreshTarget();
+            });
+    }
+
+    /// <summary>
+    /// Starts the plan over on the given day.
+    ///
+    /// Every character's start goes, not only this one's: surplus banked against the
+    /// old plan must not follow it across, and the others re-establish theirs when
+    /// they are next loaded.
+    /// </summary>
+    private void RestartPlan(DateOnly today)
+    {
+        Config.ClearTargetStarts();
+        Config.SetTargetStart(tracker.CurrentContentId, today.ToString(DailyGoal.IsoFormat));
     }
 
     /// <summary>Opens the calendar on whatever date is already set.</summary>

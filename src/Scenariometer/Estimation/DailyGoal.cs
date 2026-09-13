@@ -109,8 +109,9 @@ internal sealed record DailyGoal(
         var planTotal = questsRemaining + completedToday + completedBefore;
         var perDay = (double)planTotal / planDays;
 
-        // Previous days only. Counting today's work as surplus would double it up with
-        // the quota below, which already accounts for what has been done today.
+        // Previous days only, for the quota. Crediting today's work here would shrink
+        // today's quota as it is done, and what the day owes has to be decided once,
+        // when the day starts - not walked down by the very work that answers it.
         var carried = completedBefore - (perDay * daysElapsed);
 
         // Today's share, less whatever was banked on the days before it.
@@ -120,6 +121,29 @@ internal sealed record DailyGoal(
 
         quotaToday = Math.Clamp(quotaToday, 0, questsRemaining + completedToday);
 
+        // The standing counts today; the quota above does not. A figure that cannot
+        // move until tomorrow is not a progress report - it left "16 quests behind"
+        // frozen beside a Today row reading "10 of 21". Only the part above today's
+        // own share counts, so an untouched morning still does not open a full day's
+        // quota in the red, and a good day banks only what it earns past that share.
+        var standing = carried + Math.Max(0, completedToday - perDay);
+
+        // Past that share, "behind" and "left today" are one number and must print as
+        // one; rounding them separately is what put "12 of 21" beside "8 behind". So
+        // it is subtracted from the quota rather than rounded again. The identity
+        // floor(completedToday - Q) == completedToday - ceil(Q) holds in exact
+        // arithmetic, but perDay - carried and completedToday - perDay differ in the
+        // last bit, and a quota landing on a whole number then reads one quest further
+        // behind than the Today row has left. Sharing the integer makes the two rows
+        // incapable of disagreeing rather than merely unlikely to.
+        //
+        // The other branch claims no such agreement: inside today's grace the standing
+        // is deliberately still yesterday's, and at a quota of zero a surplus already
+        // covers the day. Floor, so 0.7 of a quest banked does not read as a whole one.
+        var aheadBy = completedToday >= perDay && quotaToday > 0
+            ? completedToday - quotaToday
+            : (int)Math.Floor(standing);
+
         return new DailyGoal(
             HasTarget: true,
             Target: target,
@@ -128,7 +152,22 @@ internal sealed record DailyGoal(
             CompletedToday: completedToday,
             QuotaToday: quotaToday,
             RemainingToday: Math.Max(0, quotaToday - completedToday),
-            AheadBy: (int)Math.Round(carried, MidpointRounding.AwayFromZero));
+            AheadBy: aheadBy);
+    }
+
+    /// <summary>
+    /// How many quests this character has finished since a plan started, today
+    /// included - what restarting the plan would discard, in the terms the question
+    /// asking about it is put in.
+    /// </summary>
+    public static int CompletedSince(
+        QuestHistory? history,
+        DateOnly planStart,
+        int dayStartHour,
+        DateTimeOffset now)
+    {
+        var (today, before) = Count(history, planStart, LogicalDate(now, dayStartHour), dayStartHour);
+        return today + before;
     }
 
     /// <summary>

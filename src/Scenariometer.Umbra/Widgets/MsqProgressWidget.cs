@@ -216,7 +216,7 @@ internal sealed class MsqProgressWidget(
         // had been met rather than one that was never asked for.
         ModeTodayGoal => snapshot.HasTarget ? $"{snapshot.CompletedToday} / {snapshot.QuotaToday}" : NoTarget,
         ModeDaysLeft => snapshot.HasTarget ? DaysLeft(snapshot) : NoTarget,
-        ModeAheadBehind => snapshot.HasTarget ? AheadBehind(snapshot.AheadBy) : NoTarget,
+        ModeAheadBehind => snapshot.HasTarget ? AheadBehind(snapshot) : NoTarget,
 
         // "Quests left today" used to be its own mode and said very nearly what
         // today's goal says. Anyone who had it selected keeps a working widget.
@@ -243,6 +243,16 @@ internal sealed class MsqProgressWidget(
     /// against the whole plan rather than today. The popup spells it out in full; a
     /// label on a toolbar has no room to.
     /// </summary>
+    /// <summary>
+    /// "Overdue" outranks the standing once the date has passed, the same way it does
+    /// for the days-left label. Both the plugin window and this widget's own popup
+    /// hide the Plan row there, and the figure behind it is no longer a day or two of
+    /// drift but the whole unfinished MSQ - a toolbar reading "465 Behind" states a
+    /// number nobody can act on.
+    /// </summary>
+    private static string AheadBehind(ScenariometerSnapshot snapshot) =>
+        snapshot.Overdue ? "Overdue" : AheadBehind(snapshot.AheadBy);
+
     private static string AheadBehind(int delta) => delta switch
     {
         > 0 => $"{delta} Ahead",
