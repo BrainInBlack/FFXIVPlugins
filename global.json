@@ -6,8 +6,8 @@
     "  msbuild-sdks   - THE Dalamud API level for every plugin in this repo.",
     "                   Dalamud.NET.Sdk major == Dalamud API level (15.x -> API 15).",
     "                   Bumping this one number retargets the whole collection.",
-    "Verified 2026-08-31 against nuget.org (Dalamud.NET.Sdk 15.0.0 was latest) and",
-    "goatcorp.github.io/dalamud-distrib/version (assembly 15.0.3.2). Re-check both",
+    "Verified 2026-09-13 against nuget.org (Dalamud.NET.Sdk 15.0.0 still latest) and",
+    "goatcorp.github.io/dalamud-distrib/version (assembly 15.0.3.4). Re-check both",
     "after a Dalamud major bump, and update repo.json's DalamudApiLevel with it."
   ],
   "sdk": {

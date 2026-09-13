@@ -18,7 +18,7 @@
          Scenariometer.json's InternalName and the manifest file name. -->
     <AssemblyName>Scenariometer</AssemblyName>
     <RootNamespace>Scenariometer</RootNamespace>
-    <Version>1.0.0.0</Version>
+    <Version>1.1.0.0</Version>
 
     <!-- Stated explicitly because the repo is no longer uniformly MIT - the Umbra
          widget beside this project is AGPL. See LICENSING.md. -->

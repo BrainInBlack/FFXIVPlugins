@@ -20,7 +20,7 @@
          inside our own root would shadow Umbra's real namespaces at every reference
          site inside the namespace body. -->
     <RootNamespace>ScenariometerUmbra</RootNamespace>
-    <Version>1.0.0.0</Version>
+    <Version>1.1.0.0</Version>
 
     <!-- AGPL, not the repo's MIT: this assembly references Umbra and Una.Drawing,
          which are AGPL-3.0 with no linking exception. See LICENSING.md at the repo

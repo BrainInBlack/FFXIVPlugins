@@ -18,6 +18,44 @@ entry without the marker is the first public release.
 
 Nothing yet.
 
+## [1.1.0] - 2026-09-13
+
+### Changed
+
+- **Changing the target date now asks what to do with the plan it belongs to.**
+  It used to restart the plan on the spot, every time, discarding the carry with no
+  warning - so moving a deadline out, which should keep a deficit and shrink it,
+  instead wiped the record of ever having been behind. A small window now offers
+  "Keep the plan" against "Restart today", and says how many quests are measured
+  against the plan it is about to discard. The date itself applies immediately
+  either way; only the plan start waits for the answer, and dismissing the window
+  keeps the plan.
+- Re-entering the target date that is already set no longer counts as a new plan.
+  It restarted one before, which made retyping a date a way to lose its history
+  without touching anything that said it would do that.
+
+### Fixed
+
+- **The plan standing ignored today.** "16 quests behind" sat frozen beside a Today
+  row reading "10 of 21" and did not move however much of the day's quota was
+  cleared, because the ahead/behind figure was measured over completed days only
+  and could not change until the next day rolled over at the day-start hour. Quests
+  done today now count toward it as soon as they are turned in - the part past
+  today's own share, so an untouched morning still does not open a full day's quota
+  behind. Today's quota itself is unchanged: what a day owes is still decided when
+  the day starts.
+- **The plan standing and today's quota could disagree by a quest.** "12 of 21" sat
+  beside "8 behind" when clearing the quota is exactly what makes the day level, so
+  both had to read 9 - the quota rounded up while the standing rounded to nearest.
+  The standing is now taken from the quota itself rather than rounded separately,
+  which also closes a rarer version of the same split where the two differed only
+  because one was computed a floating-point bit either side of a whole number.
+- The widget's ahead/behind label ignored a target date that had already passed.
+  The plugin window and the popup both hide the plan standing once it has, and the
+  figure behind it is the whole unfinished MSQ rather than a day or two of drift -
+  a toolbar reading "465 Behind" states a number nobody can act on. It now says
+  "Overdue", the way the days-left label already did.
+
 ## [1.0.0] - 2026-09-08
 
 First public release. Everything below this line was a private build; the entries
@@ -191,5 +229,6 @@ unverified: the AFK clock pause.
 - A generated plugin icon (`scripts/make-icon.py`, stdlib only) and a
   hand-maintained `repo.json` for installing through a custom Dalamud repository.
 
-[Unreleased]: https://github.com/BrainInBlack/FFXIVPlugins/compare/1.0.0...develop
+[Unreleased]: https://github.com/BrainInBlack/FFXIVPlugins/compare/1.1.0...develop
+[1.1.0]: https://github.com/BrainInBlack/FFXIVPlugins/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/BrainInBlack/FFXIVPlugins/releases/tag/1.0.0
