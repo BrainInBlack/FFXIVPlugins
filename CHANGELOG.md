@@ -18,6 +18,23 @@ entry without the marker is the first public release.
 
 Nothing yet.
 
+## [1.1.1] - 2026-11-11
+
+Maintenance release for the 2026-11-03 game patch and Dalamud 15.0.4.0. Nothing
+changes in what either half shows or does, and the IPC contract is unchanged, so a
+1.1.0 widget keeps working against this plugin and the other way round.
+
+### Changed
+
+- KamiToolKit 2.2.36 -> 2.2.66. This is not what keeps the plugin working on the new
+  patch: 2.2.36 still binds to every Dalamud and ClientStructs member it uses on
+  15.0.4.0, checked against the shipped assemblies rather than assumed. The update is
+  for two of the library's fixes that apply to these windows. The library hooks the
+  game's window-close callback for *every* window in the game, and an exception in
+  that hook used to reach native code; it is now caught and logged. Saving a
+  window's position and scale on close is now caught the same way. No code here had
+  to change.
+
 ## [1.1.0] - 2026-09-13
 
 ### Changed
@@ -229,6 +246,7 @@ unverified: the AFK clock pause.
 - A generated plugin icon (`scripts/make-icon.py`, stdlib only) and a
   hand-maintained `repo.json` for installing through a custom Dalamud repository.
 
-[Unreleased]: https://github.com/BrainInBlack/FFXIVPlugins/compare/1.1.0...develop
+[Unreleased]: https://github.com/BrainInBlack/FFXIVPlugins/compare/1.1.1...develop
+[1.1.1]: https://github.com/BrainInBlack/FFXIVPlugins/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/BrainInBlack/FFXIVPlugins/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/BrainInBlack/FFXIVPlugins/releases/tag/1.0.0

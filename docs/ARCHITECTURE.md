@@ -13,7 +13,7 @@ One git repo, one solution, one plugin per folder under `src/`:
 |-----------------------------|---------------------------------------------------------------|
 | `src/Scenariometer`         | The Dalamud plugin. Does all the measuring.                   |
 | `src/Scenariometer.Umbra`   | An Umbra toolbar widget. Displays what the plugin reports.    |
-| `src/Shared`                | The IPC contract, compiled into both (see below).             |
+| `src/Shared`                | The IPC contract and the shared report, compiled into both.   |
 | `scripts/make-icon.py`      | Renders the plugin icon. The PNG is generated, never hand-edited. |
 
 A collection rather than one repo per plugin, because they share a Dalamud API
@@ -145,7 +145,20 @@ redistributed - every reference to them is `<Private>false</Private>`. See
 - The widget is the toolbar button; the **popup** it opens on left click mirrors
   the plugin window, section for section. It is built from Una.Drawing nodes -
   Umbra's own UI layer - rather than from KamiToolKit, which draws the plugin's
-  windows. The two look alike on purpose and share nothing but the contract.
+  windows. The two look alike on purpose.
+- Because they mirror each other, the **wording is shared and the drawing is not**.
+  `src/Shared/ScenariometerReport.cs` turns the figures into the label/value pairs
+  of the pace and target sections, and `ScenariometerPalette.cs` holds the four bar
+  colours as plain bytes, which each side converts into its own colour type. Both
+  are linked in the same way as the contract. Each renderer still owns its nodes,
+  layout and theme, and decides which sections appear at all - it only paints what
+  the report hands it.
+- The report is **not** part of the wire contract, though it sits beside it. What
+  crosses the gate is measurements; how they are worded is a UI decision, and
+  putting copy on the wire would make every re-phrasing a contract change. It also
+  takes a small `ReportInput` rather than the snapshot: the plugin window draws
+  every frame, and building a snapshot for it would allocate the expansion list and
+  the mark arrays each time for six rows that need none of them.
 
 Things to know before editing it:
 

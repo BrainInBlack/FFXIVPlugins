@@ -16,9 +16,9 @@
       },
       "KamiToolKit": {
         "type": "Direct",
-        "requested": "[2.2.36, )",
-        "resolved": "2.2.36",
-        "contentHash": "Ok2olet2LInV0NanWrvYMT4WW4epkiFrZI6NHRTydjkhaZQiF9T8WaHdh7AO+gUPV10s9vXoLXCNdOWM6RI2fg=="
+        "requested": "[2.2.66, )",
+        "resolved": "2.2.66",
+        "contentHash": "THZbwwuHPMr4p6gB+pbSv6nm0iBMnFcAex7XVC2D4YS8nIQ6UrXfZjq1gdldh6SJax7764isbsC1I7Y0IRKTlQ=="
       }
     }
   }

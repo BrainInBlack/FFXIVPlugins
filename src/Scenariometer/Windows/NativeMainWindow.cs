@@ -57,7 +57,7 @@ internal sealed class NativeMainWindow : NativeAddon
     /// than a proportion. Only up to this many: a thirty-quest day would be a hatched
     /// block, which says less than a plain bar does.
     /// </summary>
-    private const int MaxTodayMarks = 10;
+    private const int MaxTodayMarks = ScenariometerReport.MaxTodayMarks;
 
     private const float MarkWidth = 2f;
 
@@ -65,7 +65,7 @@ internal sealed class NativeMainWindow : NativeAddon
     private const float MarkInset = 1f;
 
     // --- palette -----------------------------------------------------------------
-    // Grouped so the whole look can be retuned from one place. All are RGBA 0-1.
+    // All are RGBA 0-1, converted from the shared byte definitions.
     //
     // These are set through BarColor and BackgroundColor, which replace the bar's
     // nine-grid art with flat fills - so the rounded caps at each end go away. That is
@@ -74,18 +74,14 @@ internal sealed class NativeMainWindow : NativeAddon
     // art is drawn with, which read worse than the flat bar. Do not "fix" the square
     // ends by switching to MultiplyColor; that trade was made on purpose.
 
-    /// <summary>MSQ progress: the game's own warm gold, as on an experience bar.</summary>
-    private static readonly Vector4 ProgressFill = new(0.96f, 0.78f, 0.38f, 1f);
+    // The four bar colours live in ScenariometerPalette, shared with the Umbra popup
+    // so the same bar cannot end up two different golds. Converted here rather than
+    // stored twice; see that file for what each one is for and why.
+    private static readonly Vector4 ProgressFill = Rgba(ScenariometerPalette.ProgressFill);
+    private static readonly Vector4 ProgressTrack = Rgba(ScenariometerPalette.ProgressTrack);
+    private static readonly Vector4 TodayFill = Rgba(ScenariometerPalette.TodayFill);
 
-    /// <summary>The unfilled track behind it - dark, so the fill carries the eye.</summary>
-    private static readonly Vector4 ProgressTrack = new(0.08f, 0.08f, 0.10f, 0.85f);
-
-    /// <summary>
-    /// Today's goal, deliberately a different hue from MSQ progress: the two bars sit
-    /// in the same window and measure completely different things. Green rather than
-    /// something cooler - it has to sit next to the gold without fighting it.
-    /// </summary>
-    private static readonly Vector4 TodayFill = new(0.58f, 0.80f, 0.42f, 1f);
+    private static Vector4 Rgba(ReportColor color) => new(color.Rf, color.Gf, color.Bf, color.Af);
 
     /// <summary>
     /// Ticks are plain coloured rectangles. VerticalLineNode looked like the obvious
@@ -95,7 +91,7 @@ internal sealed class NativeMainWindow : NativeAddon
     /// Light rather than dark: a dark tick reads well on the gold fill and vanishes
     /// against the track, and the boundaries still to come are the interesting ones.
     /// </summary>
-    private static readonly Vector4 MarkColor = new(1f, 1f, 1f, 0.55f);
+    private static readonly Vector4 MarkColor = Rgba(ScenariometerPalette.Mark);
 
     private const float Line = 20f;
     private const float Gap = 12f;
@@ -380,8 +376,21 @@ internal sealed class NativeMainWindow : NativeAddon
         DrawCurrent(progress);
 
         var estimate = Estimator.Compute(tracker.History);
-        DrawEstimate(progress, estimate);
-        DrawGoal(progress, estimate);
+        var goal = DailyGoal.Compute(
+            Plugin.Config.TargetDate,
+            tracker.PlanStartDate,
+            Plugin.Config.DayStartHour,
+            progress.Remaining,
+            tracker.History,
+            DateTimeOffset.Now);
+
+        // One input for both sections, so the wording of every row below is the popup's
+        // wording too - see ScenariometerReport for why that is shared and the layout
+        // around it is not.
+        var input = BuildInput(progress, estimate, goal);
+
+        DrawEstimate(progress, input);
+        DrawGoal(progress, goal, input);
         DrawExpansions(progress);
 
         pauseButton.String = Plugin.Config.Paused ? "Resume tracking" : "Pause tracking";
@@ -633,7 +642,11 @@ internal sealed class NativeMainWindow : NativeAddon
         SetText(chapterText, progress.Current.GenreName);
     }
 
-    private void DrawEstimate(MsqProgress progress, Estimate estimate)
+    /// <summary>
+    /// Whether the section is here at all is this window's decision; what it says is
+    /// the shared report's. Nothing between the two lines below builds a string.
+    /// </summary>
+    private void DrawEstimate(MsqProgress progress, ReportInput input)
     {
         if (progress.Current is null)
         {
@@ -643,39 +656,59 @@ internal sealed class NativeMainWindow : NativeAddon
             return;
         }
 
-        if (estimate.SampleCount < Plugin.Config.MinimumSamples)
-        {
-            paceRow.Set("Measuring your pace", $"{estimate.SampleCount} of {Plugin.Config.MinimumSamples} quests");
-            expansionLeftRow.Set("Estimates", "once there is enough to go on");
-            msqLeftRow.Hide();
-            return;
-        }
+        var report = ScenariometerReport.Pace(input);
 
-        // The sample count rides on the label rather than the value: it qualifies what
-        // the number means, and the value column is for the number itself.
-        paceRow.Set(
-            $"Pace (median of {estimate.SampleCount})",
-            $"{Estimator.Format(TimeSpan.FromSeconds(estimate.Median))} per quest");
-
-        var expansion = progress.CurrentExpansion;
-        if (expansion is null)
-            expansionLeftRow.Hide();
-        else
-            expansionLeftRow.Set($"Rest of {expansion.Name}", Estimator.Format(estimate.For(expansion.Remaining).Mid));
-
-        msqLeftRow.Set("Rest of the MSQ", Estimator.Format(estimate.For(progress.Remaining).Mid));
+        Paint(paceRow, report.Pace);
+        Paint(expansionLeftRow, report.Expansion);
+        Paint(msqLeftRow, report.Msq);
     }
 
-    private void DrawGoal(MsqProgress progress, Estimate estimate)
+    /// <summary>
+    /// Everything the report needs, out of this side's live objects. The widget builds
+    /// the same thing out of the IPC snapshot; both then get identical wording.
+    /// </summary>
+    private static ReportInput BuildInput(MsqProgress progress, Estimate estimate, DailyGoal goal)
     {
-        var goal = DailyGoal.Compute(
-            Plugin.Config.TargetDate,
-            tracker.PlanStartDate,
-            Plugin.Config.DayStartHour,
-            progress.Remaining,
-            tracker.History,
-            DateTimeOffset.Now);
+        var expansion = progress.CurrentExpansion;
 
+        return new ReportInput
+        {
+            HasEstimate = estimate.SampleCount >= Plugin.Config.MinimumSamples,
+            SampleCount = estimate.SampleCount,
+            MinimumSamples = Plugin.Config.MinimumSamples,
+            PaceSeconds = estimate.Median,
+
+            Remaining = progress.Remaining,
+            RemainingSeconds = estimate.For(progress.Remaining).Mid.TotalSeconds,
+            ExpansionName = expansion?.Name ?? string.Empty,
+            ExpansionRemainingSeconds = estimate.For(expansion?.Remaining ?? 0).Mid.TotalSeconds,
+
+            Overdue = goal.Overdue,
+            DoneForToday = goal.DoneForToday,
+            TargetDate = goal.HasTarget ? DailyGoal.Format(goal.Target) : string.Empty,
+            DaysRemaining = goal.DaysRemaining,
+            CompletedToday = goal.CompletedToday,
+            QuotaToday = goal.QuotaToday,
+            RemainingToday = goal.RemainingToday,
+            AheadBy = goal.AheadBy,
+        };
+    }
+
+    /// <summary>A row the report had nothing for is a hidden row.</summary>
+    private static void Paint(LabelRow row, ReportRow content)
+    {
+        if (content.IsNone)
+            row.Hide();
+        else
+            row.Set(content.Label, content.Value);
+    }
+
+    /// <summary>
+    /// As with the pace section: this decides whether the block appears and drives the
+    /// bar, the report decides what every row says.
+    /// </summary>
+    private void DrawGoal(MsqProgress progress, DailyGoal goal, ReportInput input)
+    {
         if (!goal.HasTarget || progress.Current is null)
         {
             targetRow.Hide();
@@ -686,56 +719,17 @@ internal sealed class NativeMainWindow : NativeAddon
             return;
         }
 
-        if (goal.Overdue)
-        {
-            targetRow.Set("Target (passed)", DailyGoal.Format(goal.Target));
-            todayRow.Set(
-                "Still to go",
-                $"{goal.QuestsRemaining} {ScenariometerFormat.Quests(goal.QuestsRemaining)}");
-            planRow.Hide();
-            todayBar.IsVisible = false;
-            todayMarkFractions.Clear();
-            return;
-        }
+        var report = ScenariometerReport.Target(input);
 
-        // Always shown, not only once today is finished: standing against the plan is
-        // the thing a target date is for, and it was previously buried in the one
-        // branch that reported the day as done.
-        planRow.Set("Plan", ScenariometerFormat.PlanStanding(goal.AheadBy));
+        Paint(targetRow, report.Target);
+        Paint(todayRow, report.Today);
+        Paint(planRow, report.Plan);
 
-        // The days left qualify the date, so they ride on the label; the per-day figure
-        // is not repeated here because the Today row below states it as "of N".
-        targetRow.Set(
-            $"Target ({goal.DaysRemaining} {ScenariometerFormat.Days(goal.DaysRemaining)} left)",
-            DailyGoal.Format(goal.Target));
+        todayBar.IsVisible = report.ShowTodayBar;
+        todayFraction = report.TodayFraction;
 
-        todayFraction = goal.QuotaToday == 0
-            ? 1f
-            : Math.Min(1f, (float)goal.CompletedToday / goal.QuotaToday);
-        todayBar.IsVisible = true;
-
-        // One division per quest owed, so the bar can be read as "three of five" at a
-        // glance. Skipped when there are too many to tell apart, and when there is one
-        // or none - a single quest needs no dividing.
         todayMarkFractions.Clear();
-        if (goal.QuotaToday is > 1 and <= MaxTodayMarks)
-        {
-            for (var i = 1; i < goal.QuotaToday; i++)
-                todayMarkFractions.Add((float)i / goal.QuotaToday);
-        }
-
-        if (goal.DoneForToday)
-        {
-            todayRow.Set("Today", $"{goal.CompletedToday} done - finished");
-            return;
-        }
-
-        todayRow.Set(
-            "Today",
-            estimate.SampleCount < Plugin.Config.MinimumSamples
-                ? $"{goal.CompletedToday} of {goal.QuotaToday} done"
-                : $"{goal.CompletedToday} of {goal.QuotaToday} - about "
-                    + $"{Estimator.Format(estimate.For(goal.RemainingToday).Mid)} left");
+        todayMarkFractions.AddRange(report.TodayMarks);
     }
 
     private void DrawExpansions(MsqProgress progress)
