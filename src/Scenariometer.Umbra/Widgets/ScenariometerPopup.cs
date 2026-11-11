@@ -80,7 +80,7 @@ internal sealed class ScenariometerPopup : WidgetPopup
     /// rather than a proportion - but only up to this many. A thirty-quest day would
     /// be a hatched block, which says less than a plain bar does.
     /// </summary>
-    private const int MaxTodayMarks = 10;
+    private const int MaxTodayMarks = ScenariometerReport.MaxTodayMarks;
 
     /// <summary>
     /// Full height, unlike the plugin window's inset ticks. There a tick is drawn over
@@ -95,27 +95,12 @@ internal sealed class ScenariometerPopup : WidgetPopup
     // Everything that is text or chrome uses Umbra's named theme colours instead, so
     // the popup follows whatever colour profile the user has picked.
 
-    /// <summary>MSQ progress: the game's own warm gold, as on an experience bar.</summary>
-    private static readonly Color ProgressFill = Rgba(245, 199, 97, 255);
-
-    /// <summary>The unfilled track behind it - dark, so the fill carries the eye.</summary>
-    private static readonly Color ProgressTrack = Rgba(20, 20, 26, 217);
-
-    /// <summary>
-    /// Today's goal, deliberately a different hue from MSQ progress: the two bars sit
-    /// in the same popup and measure completely different things.
-    /// </summary>
-    private static readonly Color TodayFill = Rgba(148, 204, 107, 255);
-
-    /// <summary>
-    /// Light rather than dark: a dark tick reads well on the gold fill and vanishes
-    /// against the track, and the boundaries still to come are the interesting ones.
-    ///
-    /// The alpha is doing real work. Only the track sits behind a tick, so the
-    /// translucency resolves to one mid grey everywhere - softer against the gold than
-    /// an opaque divider, which reads as a hard edge.
-    /// </summary>
-    private static readonly Color MarkColor = Rgba(255, 255, 255, 140);
+    // The four come from ScenariometerPalette, shared with the plugin window so the
+    // same bar cannot end up two different golds. See that file for what each is for.
+    private static readonly Color ProgressFill = Rgba(ScenariometerPalette.ProgressFill);
+    private static readonly Color ProgressTrack = Rgba(ScenariometerPalette.ProgressTrack);
+    private static readonly Color TodayFill = Rgba(ScenariometerPalette.TodayFill);
+    private static readonly Color MarkColor = Rgba(ScenariometerPalette.Mark);
 
     /// <summary>
     /// Una.Drawing's four-byte Color constructor does not take its channels in the
@@ -125,6 +110,8 @@ internal sealed class ScenariometerPopup : WidgetPopup
     /// above can stay in plain RGB order.
     /// </summary>
     private static Color Rgba(byte r, byte g, byte b, byte a) => new(b, g, r, a);
+
+    private static Color Rgba(ReportColor color) => Rgba(color.R, color.G, color.B, color.A);
 
     private readonly ScenariometerApi api;
     private readonly Node root;
@@ -383,9 +370,13 @@ internal sealed class ScenariometerPopup : WidgetPopup
 
         messageNode.Style.IsVisible = false;
 
+        // One input for both sections, worded by the shared report - the plugin window
+        // draws these same two sections from the same code.
+        var input = ReportInput.From(snapshot);
+
         DrawMsq(snapshot);
-        DrawPace(snapshot);
-        DrawTarget(snapshot);
+        DrawPace(snapshot, input);
+        DrawTarget(snapshot, input);
         DrawExpansions(snapshot);
 
         pauseButton.Label = snapshot.Paused ? "Resume tracking" : "Pause tracking";
@@ -458,7 +449,11 @@ internal sealed class ScenariometerPopup : WidgetPopup
             + $"({(snapshot.Fraction * 100).ToString("0.0", CultureInfo.InvariantCulture)}%)";
     }
 
-    private void DrawPace(ScenariometerSnapshot snapshot)
+    /// <summary>
+    /// Whether the section is here at all is this popup's decision - it has a user
+    /// setting the plugin window does not. What it says is the shared report's.
+    /// </summary>
+    private void DrawPace(ScenariometerSnapshot snapshot, ReportInput input)
     {
         var show = ShowPace && snapshot.Remaining > 0;
         paceSection.Style.IsVisible = show;
@@ -466,29 +461,14 @@ internal sealed class ScenariometerPopup : WidgetPopup
         if (!show)
             return;
 
-        if (!snapshot.HasEstimate)
-        {
-            paceRow.Set("Measuring your pace", $"{snapshot.SampleCount} of {snapshot.MinimumSamples} quests");
-            expansionLeftRow.Set("Estimates", "once there is enough to go on");
-            msqLeftRow.Hide();
-            return;
-        }
+        var report = ScenariometerReport.Pace(input);
 
-        // The sample count rides on the label rather than the value: it qualifies what
-        // the number means, and the value column is for the number itself.
-        paceRow.Set(
-            $"Pace (median of {snapshot.SampleCount})",
-            $"{ScenariometerFormat.Duration(snapshot.PaceSeconds)} per quest");
-
-        if (snapshot.ExpansionName.Length > 0)
-            expansionLeftRow.Set($"Rest of {snapshot.ExpansionName}", ScenariometerFormat.Duration(snapshot.ExpansionRemainingSeconds));
-        else
-            expansionLeftRow.Hide();
-
-        msqLeftRow.Set("Rest of the MSQ", ScenariometerFormat.Duration(snapshot.RemainingSeconds));
+        Paint(paceRow, report.Pace);
+        Paint(expansionLeftRow, report.Expansion);
+        Paint(msqLeftRow, report.Msq);
     }
 
-    private void DrawTarget(ScenariometerSnapshot snapshot)
+    private void DrawTarget(ScenariometerSnapshot snapshot, ReportInput input)
     {
         var show = ShowTarget && snapshot.HasTarget && snapshot.Remaining > 0;
         targetSection.Style.IsVisible = show;
@@ -496,57 +476,25 @@ internal sealed class ScenariometerPopup : WidgetPopup
         if (!show)
             return;
 
-        if (snapshot.Overdue)
-        {
-            targetRow.Set("Target (passed)", snapshot.TargetDate);
-            todayRow.Set("Still to go", $"{snapshot.Remaining} {ScenariometerFormat.Quests(snapshot.Remaining)}");
-            planRow.Hide();
-            todayBar.Root.Style.IsVisible = false;
-            return;
-        }
+        var report = ScenariometerReport.Target(input);
 
-        // The days left qualify the date, so they ride on the label; the per-day figure
-        // is not repeated here because the Today row below states it as "of N".
-        targetRow.Set(
-            $"Target ({snapshot.DaysRemaining} {ScenariometerFormat.Days(snapshot.DaysRemaining)} left)",
-            snapshot.TargetDate);
+        Paint(targetRow, report.Target);
+        Paint(todayRow, report.Today);
+        Paint(planRow, report.Plan);
 
-        todayBar.Root.Style.IsVisible = true;
-        todayBar.Set(snapshot.TodayFraction, TodayMarks(snapshot.QuotaToday));
+        todayBar.Root.Style.IsVisible = report.ShowTodayBar;
 
-        // Always shown, not only once today is finished: standing against the plan is
-        // the thing a target date is for.
-        planRow.Set("Plan", ScenariometerFormat.PlanStanding(snapshot.AheadBy));
-
-        if (snapshot.DoneForToday)
-        {
-            todayRow.Set("Today", $"{snapshot.CompletedToday} done - finished");
-            return;
-        }
-
-        todayRow.Set(
-            "Today",
-            snapshot.HasEstimate
-                ? $"{snapshot.CompletedToday} of {snapshot.QuotaToday} - about "
-                    + $"{ScenariometerFormat.Duration(snapshot.RemainingToday * snapshot.PaceSeconds)} left"
-                : $"{snapshot.CompletedToday} of {snapshot.QuotaToday} done");
+        if (report.ShowTodayBar)
+            todayBar.Set(report.TodayFraction, report.TodayMarks);
     }
 
-    /// <summary>
-    /// One division per quest owed today, so the bar can be read as "three of five" at
-    /// a glance. Skipped when there are too many to tell apart, and when there is one
-    /// or none - a single quest needs no dividing.
-    /// </summary>
-    private static float[] TodayMarks(int quota)
+    /// <summary>A row the report had nothing for is a hidden row.</summary>
+    private static void Paint(LabelRow row, ReportRow content)
     {
-        if (quota is <= 1 or > MaxTodayMarks)
-            return [];
-
-        var marks = new float[quota - 1];
-        for (var i = 1; i < quota; i++)
-            marks[i - 1] = (float)i / quota;
-
-        return marks;
+        if (content.IsNone)
+            row.Hide();
+        else
+            row.Set(content.Label, content.Value);
     }
 
     private void DrawExpansions(ScenariometerSnapshot snapshot)
