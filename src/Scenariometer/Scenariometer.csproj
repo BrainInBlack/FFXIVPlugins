@@ -18,7 +18,7 @@
          Scenariometer.json's InternalName and the manifest file name. -->
     <AssemblyName>Scenariometer</AssemblyName>
     <RootNamespace>Scenariometer</RootNamespace>
-    <Version>1.1.0.0</Version>
+    <Version>1.1.1.0</Version>
 
     <!-- Stated explicitly because the repo is no longer uniformly MIT - the Umbra
          widget beside this project is AGPL. See LICENSING.md. -->
@@ -33,7 +33,7 @@
   <ItemGroup>
     <!-- Native game UI (AtkUnitBase nodes). MIT, and the same library VanillaPlus
          uses. Ships next to the plugin, so it has to be in the release zip too. -->
-    <PackageReference Include="KamiToolKit" Version="2.2.36" />
+    <PackageReference Include="KamiToolKit" Version="2.2.66" />
   </ItemGroup>
 
   <ItemGroup>
